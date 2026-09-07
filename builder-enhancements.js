@@ -1,129 +1,24 @@
 /* Builder cleanup: separate unique roots from combining-vowel pieces. */
 (function(){
-  const rootColor = '#d32f2f';
-  const prefixColor = '#16803c';
-  const suffixColor = '#1565c0';
-  const vowelColor = '#7c3aed';
-
-  const termDefinitions = {
-    dermatitis:'inflammation of skin',
-    dermatology:'study of skin',
-    dermatologist:'specialist who studies skin',
-    cardiology:'study of the heart',
-    cardiologist:'specialist who studies the heart',
-    arthroscopy:'visual examination of a joint',
-    arthroplasty:'surgical repair of a joint',
-    arthrodesis:'fixation of a joint',
-    rhinoplasty:'surgical repair of the nose',
-    cystitis:'inflammation of the urinary bladder',
-    hemolysis:'destruction of blood cells',
-    hemorrhage:'flow of blood profusely',
-    hematoma:'tumor or mass of blood',
-    hematuria:'blood in the urine',
-    neuropathy:'disease of a nerve',
-    osteogenesis:'formation of bone',
-    lymphedema:'swelling caused by lymph accumulation',
-    tracheostomy:'creation of an opening into the trachea',
-    tracheotomy:'incision into the trachea',
-    lithotripsy:'crushing of a stone',
-    herniorrhaphy:'surgical suturing of a hernia',
-    bronchiectasis:'dilation of the bronchi',
-    pneumonia:'condition involving the lungs',
-    cardiogram:'record of the heart',
-    cardiograph:'instrument for recording the heart',
-    hematocrit:'measurement involving the separation of blood components',
-    hematochezia:'passage of blood with a stool',
-    hemoptysis:'spitting of blood',
-    hemophilia:'attraction or tendency involving blood clotting',
-    hemorrhoid:'a swollen vein associated with the rectum/anus',
-    arthrocentesis:'surgical puncture of a joint'
-  };
-
-  const vowels = [
-    {piece:'o', meaning:'combining vowel'},
-    {piece:'a', meaning:'combining vowel'},
-    {piece:'i', meaning:'combining vowel'},
-    {piece:'e', meaning:'combining vowel'},
-    {piece:'u', meaning:'combining vowel'},
-    {piece:'—', meaning:'no combining vowel'}
-  ];
-
-  function esc(s){return String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));}
-  function cleanPart(s){return String(s||'').replace(/^-|-$/g,'');}
-  function uniqBy(arr,key){const seen=new Set();return arr.filter(x=>{const k=key(x);if(seen.has(k))return false;seen.add(k);return true;});}
-
-  function getParts(){
-    const roots = uniqBy((window.data||[]).filter(x=>x.type==='Root'), x=>x.part);
-    const prefixes = uniqBy((window.data||[]).filter(x=>x.type==='Prefix'), x=>x.part);
-    const suffixes = uniqBy((window.data||[]).filter(x=>x.type==='Suffix'), x=>x.part);
-    return {roots,prefixes,suffixes};
-  }
-
-  function piece(item,type){
-    const label=type==='vowel'?item.piece:item.part;
-    const meaning=type==='vowel'?item.meaning:item.meaning;
-    const color=type==='root'?rootColor:type==='prefix'?prefixColor:type==='suffix'?suffixColor:vowelColor;
-    return `<button type="button" class="builder-piece ${type}-piece" draggable="true" data-type="${type}" data-value="${esc(label)}" data-meaning="${esc(meaning)}" style="--piece-color:${color}"><span>${esc(label)}</span><small>${esc(meaning)}</small></button>`;
-  }
-
+  const rootColor='#d32f2f',prefixColor='#16803c',suffixColor='#1565c0',vowelColor='#7c3aed';
+  const termDefinitions={dermatitis:'inflammation of skin',dermatology:'study of skin',dermatologist:'specialist who studies skin',cardiology:'study of the heart',cardiologist:'specialist who studies the heart',arthroscopy:'visual examination of a joint',arthroplasty:'surgical repair of a joint',arthrodesis:'fixation of a joint',rhinoplasty:'surgical repair of the nose',cystitis:'inflammation of the urinary bladder',hemolysis:'destruction of blood cells',hemorrhage:'flow of blood profusely',hematoma:'tumor or mass of blood',hematuria:'blood in the urine',neuropathy:'disease of a nerve',osteogenesis:'formation of bone',lymphedema:'swelling caused by lymph accumulation',tracheostomy:'creation of an opening into the trachea',tracheotomy:'incision into the trachea',lithotripsy:'crushing of a stone',herniorrhaphy:'surgical suturing of a hernia',bronchiectasis:'dilation of the bronchi',pneumonia:'condition involving the lungs',cardiogram:'record of the heart',cardiograph:'instrument for recording the heart',hematocrit:'measurement involving the separation of blood components',hematochezia:'passage of blood with a stool',hemoptysis:'spitting of blood',hemophilia:'attraction or tendency involving blood clotting',hemorrhoid:'a swollen vein associated with the rectum/anus',arthrocentesis:'surgical puncture of a joint'};
+  const vowels=[{piece:'o',meaning:'combining vowel'},{piece:'a',meaning:'combining vowel'},{piece:'i',meaning:'combining vowel'},{piece:'e',meaning:'combining vowel'},{piece:'u',meaning:'combining vowel'},{piece:'—',meaning:'no combining vowel'}];
+  const esc=s=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
+  const cleanPart=s=>String(s||'').replace(/^-|-$/g,'');
+  const uniqBy=(arr,key)=>{const seen=new Set();return arr.filter(x=>{const k=key(x);if(seen.has(k))return false;seen.add(k);return true;});};
+  function sourceData(){try{return data||[]}catch(_){return[]}}
+  function getParts(){const d=sourceData();return{roots:uniqBy(d.filter(x=>x.type==='Root'),x=>x.part),prefixes:uniqBy(d.filter(x=>x.type==='Prefix'),x=>x.part),suffixes:uniqBy(d.filter(x=>x.type==='Suffix'),x=>x.part)};}
+  function piece(item,type){const label=type==='vowel'?item.piece:item.part,meaning=item.meaning,color=type==='root'?rootColor:type==='prefix'?prefixColor:type==='suffix'?suffixColor:vowelColor;return `<button type="button" class="builder-piece ${type}-piece" draggable="true" data-type="${type}" data-value="${esc(label)}" data-meaning="${esc(meaning)}" style="--piece-color:${color}"><span>${esc(label)}</span><small>${esc(meaning)}</small></button>`;}
   function render(){
-    const host=document.getElementById('builder');
-    if(!host)return;
-    const {roots,prefixes,suffixes}=getParts();
-    host.innerHTML=`
-      <div class="card builder-shell">
-        <div class="builder-title-row"><div><h2>🧩 Medical Term Builder</h2><p class="muted">Build a medical term one puzzle piece at a time. Roots and combining vowels are now separate pieces, so each root appears only once.</p></div></div>
-        <div class="builder-legend"><span class="legend-item" style="--c:${prefixColor}">Prefix</span><span class="legend-item" style="--c:${rootColor}">Root</span><span class="legend-item" style="--c:${vowelColor}">Combining vowel</span><span class="legend-item" style="--c:${suffixColor}">Suffix</span></div>
-        <div class="builder-section"><h3>🟢 Prefixes <span>optional</span></h3><div class="piece-bank" id="prefixBank">${prefixes.length?prefixes.map(x=>piece(x,'prefix')).join(''):'<span class="muted">No Chapter 1 prefixes loaded.</span>'}</div></div>
-        <div class="builder-section"><h3>🔴 Roots <span>choose the root</span></h3><div class="piece-bank" id="rootBank">${roots.map(x=>piece(x,'root')).join('')}</div></div>
-        <div class="builder-section"><h3>🟣 Combining Vowels <span>choose separately</span></h3><div class="piece-bank" id="vowelBank">${vowels.map(x=>piece(x,'vowel')).join('')}</div><p class="small muted">The vowel is a separate piece. Use “no combining vowel” when the suffix begins with a vowel or when the word is built without one.</p></div>
-        <div class="builder-section"><h3>🔵 Suffixes <span>optional</span></h3><div class="piece-bank" id="suffixBank">${suffixes.map(x=>piece(x,'suffix')).join('')}</div></div>
-        <div class="build-board-wrap"><div class="board-heading"><h3>Your word</h3><button type="button" class="secondary" id="clearBuilder">Clear</button></div><div id="buildBoard" class="build-board"><span class="drop-hint">Click pieces or drag them here to build a term.</span></div><div id="buildResult" class="builder-result"><div class="muted">Finished word</div><div class="term builder-word">—</div><div class="builder-definition muted">Choose a root, then add the pieces you need.</div></div></div>
-      </div>`;
-
-    const style=document.createElement('style');
-    style.id='builder-enhancement-style';
-    style.textContent=`
-      .builder-shell{overflow:hidden}.builder-title-row{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.builder-legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}.legend-item{border-left:6px solid var(--c);padding:6px 10px;background:#f7f8ff;border-radius:8px;font-weight:700}.builder-section{margin:16px 0}.builder-section h3{display:flex;justify-content:space-between;gap:10px;align-items:center}.builder-section h3 span{font-size:.78rem;font-weight:500;color:var(--muted)}.piece-bank{display:flex;flex-wrap:wrap;gap:10px;padding:12px;background:#f7f8fb;border:1px dashed var(--border);border-radius:14px;min-height:60px}.builder-piece{position:relative;border:0;border-radius:12px;padding:10px 14px 9px 18px;background:#fff;box-shadow:0 2px 7px #17203318;cursor:grab;text-align:left;min-width:88px;border-left:7px solid var(--piece-color);transition:transform .12s,box-shadow .12s}.builder-piece:before{content:'';position:absolute;left:-13px;top:50%;width:12px;height:24px;transform:translateY(-50%);border-radius:8px 0 0 8px;background:var(--piece-color)}.builder-piece:hover{transform:translateY(-2px);box-shadow:0 5px 12px #17203324}.builder-piece:active{cursor:grabbing}.builder-piece small{display:block;color:var(--muted);font-size:.72rem;margin-top:3px;max-width:150px}.build-board-wrap{margin-top:22px}.board-heading{display:flex;justify-content:space-between;align-items:center}.build-board{min-height:100px;border:2px dashed #b8c1ff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:linear-gradient(145deg,#fff,#f4f6ff)}.drop-hint{color:var(--muted)}.built-piece{cursor:pointer;border:0;border-radius:10px;padding:10px 13px;color:#fff;font-weight:800;position:relative}.built-piece small{display:block;font-weight:500;font-size:.7rem;opacity:.9}.built-piece[data-type=root]{background:${rootColor}}.built-piece[data-type=prefix]{background:${prefixColor}}.built-piece[data-type=vowel]{background:${vowelColor}}.built-piece[data-type=suffix]{background:${suffixColor}}.builder-result{margin-top:15px;padding:18px;border-radius:14px;background:#f7f8ff}.builder-word{font-size:2rem;margin:5px 0}.builder-definition{font-size:1rem}.builder-note{margin-top:7px;font-size:.85rem}@media(max-width:700px){.builder-piece{min-width:78px}.builder-word{font-size:1.6rem}}
-    `;
-    document.head.appendChild(style);
-
-    const state=[];
-    const board=document.getElementById('buildBoard');
-    function add(type,value,meaning){
-      if(type==='root' && state.some(x=>x.type==='root')) return;
-      if(type==='vowel' && state.some(x=>x.type==='vowel')) return;
-      if(type==='prefix' && state.some(x=>x.type==='prefix')) return;
-      if(type==='suffix' && state.some(x=>x.type==='suffix')) return;
-      state.push({type,value,meaning}); draw();
-    }
-    function draw(){
-      board.innerHTML=state.length?state.map((x,i)=>`<button type="button" class="built-piece" data-type="${x.type}" data-i="${i}">${esc(cleanPart(x.value)||x.value)}<small>${esc(x.meaning)}</small></button>`).join(''):'<span class="drop-hint">Click pieces or drag them here to build a term.</span>';
-      const word=assemble();
-      const def=termDefinitions[word.toLowerCase()];
-      document.querySelector('.builder-word').textContent=word||'—';
-      document.querySelector('.builder-definition').innerHTML=def?`<b>Definition:</b> ${esc(def)}`:(word?`<b>Word-part meaning:</b> ${esc(state.map(x=>x.meaning).filter(Boolean).join(' + '))}`:'Choose a root, then add the pieces you need.');
-      board.querySelectorAll('.built-piece').forEach(btn=>btn.addEventListener('click',()=>{state.splice(Number(btn.dataset.i),1);draw();}));
-    }
-    function assemble(){
-      let root=state.find(x=>x.type==='root')?.value||'';
-      let prefix=state.find(x=>x.type==='prefix')?.value||'';
-      let vowel=state.find(x=>x.type==='vowel')?.value||'';
-      let suffix=state.find(x=>x.type==='suffix')?.value||'';
-      if(!root && !prefix && !suffix)return '';
-      root=cleanPart(root);prefix=cleanPart(prefix);suffix=cleanPart(suffix);vowel=vowel==='—'?'':vowel;
-      return prefix+root+vowel+suffix;
-    }
-    host.querySelectorAll('.builder-piece').forEach(btn=>{
-      btn.addEventListener('click',()=>add(btn.dataset.type,btn.dataset.value,btn.dataset.meaning));
-      btn.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',JSON.stringify({type:btn.dataset.type,value:btn.dataset.value,meaning:btn.dataset.meaning}));});
-    });
-    board.addEventListener('dragover',e=>e.preventDefault());
-    board.addEventListener('drop',e=>{e.preventDefault();try{const x=JSON.parse(e.dataTransfer.getData('text/plain'));add(x.type,x.value,x.meaning)}catch(_){}});
-    document.getElementById('clearBuilder').addEventListener('click',()=>{state.length=0;draw();});
-    draw();
+    const host=document.getElementById('builder');if(!host)return;const{roots,prefixes,suffixes}=getParts();
+    host.innerHTML=`<div class="card builder-shell"><div><h2>🧩 Medical Term Builder</h2><p class="muted">Build a medical term one puzzle piece at a time. Each root appears once; combining vowels are their own separate pieces.</p></div><div class="builder-legend"><span class="legend-item" style="--c:${prefixColor}">Prefix</span><span class="legend-item" style="--c:${rootColor}">Root</span><span class="legend-item" style="--c:${vowelColor}">Combining vowel</span><span class="legend-item" style="--c:${suffixColor}">Suffix</span></div><div class="builder-section"><h3>🟢 Prefixes <span>optional</span></h3><div class="piece-bank">${prefixes.length?prefixes.map(x=>piece(x,'prefix')).join(''):'<span class="muted">No Chapter 1 prefixes loaded.</span>'}</div></div><div class="builder-section"><h3>🔴 Roots <span>choose one root</span></h3><div class="piece-bank">${roots.map(x=>piece(x,'root')).join('')}</div></div><div class="builder-section"><h3>🟣 Combining Vowels <span>choose separately</span></h3><div class="piece-bank">${vowels.map(x=>piece(x,'vowel')).join('')}</div><p class="small muted">The combining vowel is no longer duplicated on every root. Choose it only when your word needs one.</p></div><div class="builder-section"><h3>🔵 Suffixes <span>optional</span></h3><div class="piece-bank">${suffixes.map(x=>piece(x,'suffix')).join('')}</div></div><div class="build-board-wrap"><div class="board-heading"><h3>Your word</h3><button type="button" class="secondary" id="clearBuilder">Clear</button></div><div id="buildBoard" class="build-board"><span class="drop-hint">Click pieces or drag them here to build a term.</span></div><div id="buildResult" class="builder-result"><div class="muted">Finished word</div><div class="term builder-word">—</div><div class="builder-definition muted">Choose a root, then add the pieces you need.</div></div></div></div>`;
+    if(!document.getElementById('builder-enhancement-style')){const style=document.createElement('style');style.id='builder-enhancement-style';style.textContent=`.builder-shell{overflow:hidden}.builder-legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}.legend-item{border-left:6px solid var(--c);padding:6px 10px;background:#f7f8ff;border-radius:8px;font-weight:700}.builder-section{margin:16px 0}.builder-section h3{display:flex;justify-content:space-between;gap:10px;align-items:center}.builder-section h3 span{font-size:.78rem;font-weight:500;color:var(--muted)}.piece-bank{display:flex;flex-wrap:wrap;gap:10px;padding:12px;background:#f7f8fb;border:1px dashed var(--border);border-radius:14px;min-height:60px}.builder-piece{position:relative;border:0;border-radius:12px;padding:10px 14px 9px 18px;background:#fff;box-shadow:0 2px 7px #17203318;cursor:grab;text-align:left;min-width:88px;border-left:7px solid var(--piece-color);transition:transform .12s,box-shadow .12s}.builder-piece:before{content:'';position:absolute;left:-13px;top:50%;width:12px;height:24px;transform:translateY(-50%);border-radius:8px 0 0 8px;background:var(--piece-color)}.builder-piece:hover{transform:translateY(-2px);box-shadow:0 5px 12px #17203324}.builder-piece small{display:block;color:var(--muted);font-size:.72rem;margin-top:3px;max-width:150px}.build-board-wrap{margin-top:22px}.board-heading{display:flex;justify-content:space-between;align-items:center}.build-board{min-height:100px;border:2px dashed #b8c1ff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:linear-gradient(145deg,#fff,#f4f6ff)}.drop-hint{color:var(--muted)}.built-piece{cursor:pointer;border:0;border-radius:10px;padding:10px 13px;color:#fff;font-weight:800}.built-piece small{display:block;font-weight:500;font-size:.7rem;opacity:.9}.built-piece[data-type=root]{background:${rootColor}}.built-piece[data-type=prefix]{background:${prefixColor}}.built-piece[data-type=vowel]{background:${vowelColor}}.built-piece[data-type=suffix]{background:${suffixColor}}.builder-result{margin-top:15px;padding:18px;border-radius:14px;background:#f7f8ff}.builder-word{font-size:2rem;margin:5px 0}.builder-definition{font-size:1rem}@media(max-width:700px){.builder-piece{min-width:78px}.builder-word{font-size:1.6rem}}`;document.head.appendChild(style);}
+    const state=[],board=document.getElementById('buildBoard');
+    function add(type,value,meaning){if(type==='root'&&state.some(x=>x.type==='root'))return;if(type==='vowel'&&state.some(x=>x.type==='vowel'))return;if(type==='prefix'&&state.some(x=>x.type==='prefix'))return;if(type==='suffix'&&state.some(x=>x.type==='suffix'))return;state.push({type,value,meaning});draw();}
+    function draw(){board.innerHTML=state.length?state.map((x,i)=>`<button type="button" class="built-piece" data-type="${x.type}" data-i="${i}">${esc(cleanPart(x.value)||x.value)}<small>${esc(x.meaning)}</small></button>`).join(''):'<span class="drop-hint">Click pieces or drag them here to build a term.</span>';const word=assemble(),def=termDefinitions[word.toLowerCase()];document.querySelector('.builder-word').textContent=word||'—';document.querySelector('.builder-definition').innerHTML=def?`<b>Definition:</b> ${esc(def)}`:(word?`<b>Word-part meaning:</b> ${esc(state.map(x=>x.meaning).filter(Boolean).join(' + '))}`:'Choose a root, then add the pieces you need.');board.querySelectorAll('.built-piece').forEach(btn=>btn.addEventListener('click',()=>{state.splice(Number(btn.dataset.i),1);draw();}));}
+    function assemble(){let root=state.find(x=>x.type==='root')?.value||'',prefix=state.find(x=>x.type==='prefix')?.value||'',vowel=state.find(x=>x.type==='vowel')?.value||'',suffix=state.find(x=>x.type==='suffix')?.value||'';if(!root&&!prefix&&!suffix)return '';root=cleanPart(root);prefix=cleanPart(prefix);suffix=cleanPart(suffix);vowel=vowel==='—'?'':vowel;return prefix+root+vowel+suffix;}
+    host.querySelectorAll('.builder-piece').forEach(btn=>{btn.addEventListener('click',()=>add(btn.dataset.type,btn.dataset.value,btn.dataset.meaning));btn.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',JSON.stringify({type:btn.dataset.type,value:btn.dataset.value,meaning:btn.dataset.meaning})));});
+    board.addEventListener('dragover',e=>e.preventDefault());board.addEventListener('drop',e=>{e.preventDefault();try{const x=JSON.parse(e.dataTransfer.getData('text/plain'));add(x.type,x.value,x.meaning)}catch(_){}});document.getElementById('clearBuilder').addEventListener('click',()=>{state.length=0;draw();});draw();
   }
-
-  function start(){setTimeout(render,0);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  function start(){setTimeout(render,0);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
